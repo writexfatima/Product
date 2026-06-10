@@ -1,0 +1,6 @@
+{
+  "name": "Fatima Publication",
+  "description": "The complete Fatima Publication Website with a rich Public Portal and a secure Admin Dashboard for bookstore, manuscript submissions, membership, packages management, and layout customisation.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

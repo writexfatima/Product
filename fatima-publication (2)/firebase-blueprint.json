@@ -1,0 +1,268 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User accounts with roles like admin and public users.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique identifier for the user" },
+        "email": { "type": "string", "description": "User email address" },
+        "displayName": { "type": "string", "description": "Full name" },
+        "role": { "type": "string", "enum": ["admin", "public"], "description": "Access control role" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Book": {
+      "title": "Book",
+      "description": "Books sold or showcased in the Bookstore.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Book identifier" },
+        "title": { "type": "string", "description": "Title of the book" },
+        "author": { "type": "string", "description": "Author name" },
+        "genre": { "type": "string", "description": "Genre/Genre category" },
+        "language": { "type": "string", "description": "Language of the book" },
+        "price": { "type": "string", "description": "Retail price of the book" },
+        "description": { "type": "string", "description": "Short synopsis" },
+        "coverUrl": { "type": "string", "description": "Firebase storage URL or fallback image link" },
+        "isAvailable": { "type": "boolean", "description": "Stock availability status" },
+        "isFeatured": { "type": "boolean", "description": "Whether selected as featured book" },
+        "purchaseLinks": {
+          "type": "object",
+          "description": "Third-party buying links"
+        },
+        "buyNowLink": { "type": "string", "description": "Main single redirect purchase URL" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "author", "genre", "language", "price"]
+    },
+    "Quote": {
+      "title": "Literary Quote",
+      "description": "Inspiring quotes displayed on the landing page carousel.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "author": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "text", "author"]
+    },
+    "TeamMember": {
+      "title": "Team Member",
+      "description": "Profiles of publishing house founders and key team members.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "designation": { "type": "string" },
+        "biography": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "designation"]
+    },
+    "TimelineEvent": {
+      "title": "Timeline Event",
+      "description": "Chronological milestones loaded dynamically on the About page.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "year": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "year", "title"]
+    },
+    "ContactMessage": {
+      "title": "Contact Message",
+      "description": "Support inquiries and feedback sent via the homepage contact form.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "message": { "type": "string" },
+        "isResolved": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "message"]
+    },
+    "Member": {
+      "title": "Registered Community Member",
+      "description": "Authors and readers registered in the publishing community.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "city": { "type": "string" },
+        "occupation": { "type": "string" },
+        "interests": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "phone"]
+    },
+    "Manuscript": {
+      "title": "Manuscript Submission",
+      "description": "Book drafts uploaded by authors with guidelines metadata.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "authorName": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "city": { "type": "string" },
+        "title": { "type": "string" },
+        "genre": { "type": "string" },
+        "wordCount": { "type": "number" },
+        "synopsis": { "type": "string" },
+        "manuscriptUrl": { "type": "string" },
+        "coverLetterUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["received", "review", "feedback", "contract"] },
+        "internalNotes": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "authorName", "email", "title", "genre", "manuscriptUrl"]
+    },
+    "PublishingPackage": {
+      "title": "Publishing Package",
+      "description": "Custom package offers (e.g., Starter, Professional, Premium).",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "features": { "type": "string" },
+        "price": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "price"]
+    },
+    "PackageInquiry": {
+      "title": "Package Inquiry",
+      "description": "Publishing service interest leads captured from packages.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "phone": { "type": "string" },
+        "bookTitle": { "type": "string" },
+        "selectedPackage": { "type": "string" },
+        "additionalRequirements": { "type": "string" },
+        "status": { "type": "string", "enum": ["new", "contacted", "consultation", "converted"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "email", "phone", "selectedPackage"]
+    },
+    "Testimonial": {
+      "title": "Author Testimonial",
+      "description": "Success stories and feedback from published authors.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "relation": { "type": "string" },
+        "text": { "type": "string" },
+        "rating": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "text"]
+    },
+    "Partner": {
+      "title": "Publishing Partner",
+      "description": "Distribution platform info and purchase landing links.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "partnerUrl": { "type": "string" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "partnerUrl"]
+    },
+    "HeroSlide": {
+      "title": "Homepage Hero Slide",
+      "description": "Customized slide banners for the dynamic homepage cover carousel.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "image": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "primaryCta": { "type": "string" },
+        "primaryAction": { "type": "string" },
+        "secondaryCta": { "type": "string" },
+        "secondaryAction": { "type": "string" }
+      },
+      "required": ["id", "title", "subtitle"]
+    },
+    "AppSettings": {
+      "title": "Global Settings",
+      "description": "Dynamic contact information, addresses, and about company descriptions.",
+      "type": "object",
+      "properties": {
+        "contactAddress": { "type": "string" },
+        "contactEmail": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "aboutStory": { "type": "string" },
+        "aboutMission": { "type": "string" },
+        "aboutVision": { "type": "string" },
+        "aboutValues": { "type": "array", "items": { "type": "string" } },
+        "siteName": { "type": "string" },
+        "siteIconUrl": { "type": "string" },
+        "visibleNavPages": { "type": "array", "items": { "type": "string" } },
+        "certTitle": { "type": "string" },
+        "certDescription": { "type": "string" },
+        "certCardHeader": { "type": "string" },
+        "certCardSubHeader": { "type": "string" },
+        "certCardName": { "type": "string" },
+        "certCardCode": { "type": "string" },
+        "certCardStatus": { "type": "string" },
+        "navLabelHome": { "type": "string" },
+        "navLabelBookstore": { "type": "string" },
+        "navLabelAbout": { "type": "string" },
+        "navLabelGallery": { "type": "string" },
+        "navLabelJoin": { "type": "string" },
+        "navLabelPublish": { "type": "string" },
+        "navLabelManuscript": { "type": "string" }
+      }
+    },
+    "GalleryItem": {
+      "title": "Gallery Item",
+      "description": "Dynamic showcase images for the gallery page.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "imageUrl", "title"]
+    }
+  },
+  "firestore": {
+    "users": { "schema": "User", "description": "User profiles database" },
+    "books": { "schema": "Book", "description": "Available library inventory" },
+    "quotes": { "schema": "Quote", "description": "Display landing carousel quotes" },
+    "teamMembers": { "schema": "TeamMember", "description": "Publishing house personnel" },
+    "timelineEvents": { "schema": "TimelineEvent", "description": "Company history events" },
+    "contactMessages": { "schema": "ContactMessage", "description": "Form messages received" },
+    "members": { "schema": "Member", "description": "Registered authors and readers community" },
+    "manuscripts": { "schema": "Manuscript", "description": "Received manuscript digital files" },
+    "publishingPackages": { "schema": "PublishingPackage", "description": "Published author distribution tiers" },
+    "packageInquiries": { "schema": "PackageInquiry", "description": "Author leads inquiries" },
+    "testimonials": { "schema": "Testimonial", "description": "Feedback reviews" },
+    "publishingPartners": { "schema": "Partner", "description": "External affiliate store links config" },
+    "heroSlides": { "schema": "HeroSlide", "description": "Banners on dynamic homepage carousel" },
+    "settings": { "schema": "AppSettings", "description": "Global enterprise settings document" },
+    "gallery": { "schema": "GalleryItem", "description": "Gallery showcase items" }
+  }
+}

@@ -1,0 +1,337 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net (Default Deny Catch-all)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PRIMITIVE HELPERS ---
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isEmailVerified() {
+      return isSignedIn() && (
+        request.auth.token.email_verified == true ||
+        request.auth.token.firebase.sign_in_provider == 'google.com'
+      );
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "mohd.fahad98871@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- SCHEMA VALIDATORS ---
+
+    function isValidBook(data) {
+      return data.keys().hasAll(['id', 'title', 'author', 'genre', 'language', 'price']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.author is string && data.author.size() <= 150 &&
+             data.genre is string && data.genre.size() <= 100 &&
+             data.language is string && data.language.size() <= 50 &&
+             data.price is string && data.price.size() <= 50 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             (!('coverUrl' in data) || (data.coverUrl is string && data.coverUrl.size() <= 1000)) &&
+             (!('isAvailable' in data) || data.isAvailable is bool) &&
+             (!('isFeatured' in data) || data.isFeatured is bool) &&
+             (!('purchaseLinks' in data) || data.purchaseLinks is map) &&
+             (!('buyNowLink' in data) || (data.buyNowLink is string && data.buyNowLink.size() <= 2000));
+    }
+
+    function isValidQuote(data) {
+      return data.keys().hasAll(['id', 'text', 'author']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.text is string && data.text.size() <= 1000 &&
+             data.author is string && data.author.size() <= 150;
+    }
+
+    function isValidTeamMember(data) {
+      return data.keys().hasAll(['id', 'name', 'designation']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.designation is string && data.designation.size() <= 150 &&
+             (!('biography' in data) || (data.biography is string && data.biography.size() <= 2000)) &&
+             (!('imageUrl' in data) || (data.imageUrl is string && data.imageUrl.size() <= 1000));
+    }
+
+    function isValidTimelineEvent(data) {
+      return data.keys().hasAll(['id', 'year', 'title']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.year is string && data.year.size() <= 10 &&
+             data.title is string && data.title.size() <= 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000));
+    }
+
+    function isValidContactMessage(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'message']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.message is string && data.message.size() <= 3000 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+             (!('isResolved' in data) || data.isResolved is bool);
+    }
+
+    function isValidMember(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'phone']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             (!('city' in data) || (data.city is string && data.city.size() <= 100)) &&
+             (!('occupation' in data) || (data.occupation is string && data.occupation.size() <= 100)) &&
+             (!('interests' in data) || (data.interests is string && data.interests.size() <= 500));
+    }
+
+    function isValidManuscript(data) {
+      return data.keys().hasAll(['id', 'authorName', 'email', 'title', 'genre', 'manuscriptUrl']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.authorName is string && data.authorName.size() <= 150 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.genre is string && data.genre.size() <= 100 &&
+             data.manuscriptUrl is string && data.manuscriptUrl.size() <= 1000 &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 30)) &&
+             (!('city' in data) || (data.city is string && data.city.size() <= 100)) &&
+             (!('wordCount' in data) || (data.wordCount is int || data.wordCount is float)) &&
+             (!('synopsis' in data) || (data.synopsis is string && data.synopsis.size() <= 3000)) &&
+             (!('coverLetterUrl' in data) || (data.coverLetterUrl is string && data.coverLetterUrl.size() <= 1000)) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 50)) &&
+             (!('internalNotes' in data) || (data.internalNotes is string && data.internalNotes.size() <= 5000));
+    }
+
+    function isValidPublishingPackage(data) {
+      return data.keys().hasAll(['id', 'name', 'price']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.price is string && data.price.size() <= 50 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             (!('features' in data) || (data.features is string));
+    }
+
+    function isValidPackageInquiry(data) {
+      return data.keys().hasAll(['id', 'name', 'email', 'phone', 'selectedPackage']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.phone is string && data.phone.size() <= 30 &&
+             data.selectedPackage is string && data.selectedPackage.size() <= 100 &&
+             (!('bookTitle' in data) || (data.bookTitle is string && data.bookTitle.size() <= 200)) &&
+             (!('additionalRequirements' in data) || (data.additionalRequirements is string && data.additionalRequirements.size() <= 3000)) &&
+             (!('status' in data) || (data.status is string && data.status.size() <= 50));
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll(['id', 'name', 'text']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 150 &&
+             data.text is string && data.text.size() <= 1000 &&
+             (!('relation' in data) || (data.relation is string && data.relation.size() <= 100)) &&
+             (!('rating' in data) || (data.rating is int || data.rating is float));
+    }
+
+    function isValidPartner(data) {
+      return data.keys().hasAll(['id', 'name', 'partnerUrl']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.partnerUrl is string && data.partnerUrl.size() <= 1000 &&
+             (!('logoUrl' in data) || (data.logoUrl is string && data.logoUrl.size() <= 1000));
+    }
+
+    function isValidHeroSlide(data) {
+      return data.keys().hasAll(['id', 'title', 'subtitle']) &&
+             data.id is string && data.id.size() <= 100 &&
+             data.title is string && data.title.size() <= 300 &&
+             data.subtitle is string && data.subtitle.size() <= 1000 &&
+             (!('image' in data) || (data.image is string && data.image.size() <= 2000000)) &&
+             (!('primaryCta' in data) || (data.primaryCta is string && data.primaryCta.size() <= 100)) &&
+             (!('primaryAction' in data) || (data.primaryAction is string && data.primaryAction.size() <= 100)) &&
+             (!('secondaryCta' in data) || (data.secondaryCta is string && data.secondaryCta.size() <= 100)) &&
+             (!('secondaryAction' in data) || (data.secondaryAction is string && data.secondaryAction.size() <= 100));
+    }
+
+    function isValidSettings(data) {
+      return data.keys().hasAll(['contactAddress', 'contactEmail', 'contactPhone', 'aboutStory', 'aboutMission', 'aboutVision', 'aboutValues']) &&
+             data.contactAddress is string && data.contactAddress.size() <= 5000 &&
+             data.contactEmail is string && data.contactEmail.size() <= 150 &&
+             data.contactPhone is string && data.contactPhone.size() <= 100 &&
+             data.aboutStory is string && data.aboutStory.size() <= 10000 &&
+             data.aboutMission is string && data.aboutMission.size() <= 5000 &&
+             data.aboutVision is string && data.aboutVision.size() <= 5000 &&
+             data.aboutValues is list && data.aboutValues.size() <= 100 &&
+             (!('siteName' in data) || (data.siteName is string && data.siteName.size() <= 200)) &&
+             (!('siteIconUrl' in data) || (data.siteIconUrl is string && data.siteIconUrl.size() <= 1048576)) &&
+             (!('visibleNavPages' in data) || (data.visibleNavPages is list && data.visibleNavPages.size() <= 20)) &&
+             (!('certTitle' in data) || (data.certTitle is string && data.certTitle.size() <= 200)) &&
+             (!('certDescription' in data) || (data.certDescription is string && data.certDescription.size() <= 2000)) &&
+             (!('certCardHeader' in data) || (data.certCardHeader is string && data.certCardHeader.size() <= 200)) &&
+             (!('certCardSubHeader' in data) || (data.certCardSubHeader is string && data.certCardSubHeader.size() <= 200)) &&
+             (!('certCardName' in data) || (data.certCardName is string && data.certCardName.size() <= 200)) &&
+             (!('certCardCode' in data) || (data.certCardCode is string && data.certCardCode.size() <= 200)) &&
+             (!('certCardStatus' in data) || (data.certCardStatus is string && data.certCardStatus.size() <= 200)) &&
+             (!('navLabelHome' in data) || (data.navLabelHome is string && data.navLabelHome.size() <= 200)) &&
+             (!('navLabelBookstore' in data) || (data.navLabelBookstore is string && data.navLabelBookstore.size() <= 200)) &&
+             (!('navLabelAbout' in data) || (data.navLabelAbout is string && data.navLabelAbout.size() <= 200)) &&
+             (!('navLabelGallery' in data) || (data.navLabelGallery is string && data.navLabelGallery.size() <= 200)) &&
+             (!('navLabelJoin' in data) || (data.navLabelJoin is string && data.navLabelJoin.size() <= 200)) &&
+             (!('navLabelPublish' in data) || (data.navLabelPublish is string && data.navLabelPublish.size() <= 200)) &&
+             (!('navLabelManuscript' in data) || (data.navLabelManuscript is string && data.navLabelManuscript.size() <= 200));
+    }
+
+    function isValidGalleryItem(data) {
+      return data.keys().hasAll(['id', 'imageUrl', 'title']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.imageUrl is string && data.imageUrl.size() <= 1000 &&
+             data.title is string && data.title.size() <= 200 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+             (!('createdAt' in data) || data.createdAt is string);
+    }
+
+    // --- COLLECTION SPECIFIC ACCESS CONTROLS ---
+
+    // 1. Admin document locator
+    match /admins/{adminId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // 2. Users Collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isSignedIn() && (request.auth.uid == userId || isAdmin()) && 
+                            (!('role' in incoming()) || incoming().role == 'public' || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    // 3. Books Collection
+    match /books/{bookId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidBook(incoming()) && isValidId(bookId);
+      allow update: if isAdmin() && isValidBook(incoming()) && isValidId(bookId);
+      allow delete: if isAdmin();
+    }
+
+    // 4. Quotes Collection
+    match /quotes/{quoteId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidQuote(incoming()) && isValidId(quoteId);
+      allow update: if isAdmin() && isValidQuote(incoming()) && isValidId(quoteId);
+      allow delete: if isAdmin();
+    }
+
+    // 5. Team Members Collection
+    match /teamMembers/{memberId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTeamMember(incoming()) && isValidId(memberId);
+      allow update: if isAdmin() && isValidTeamMember(incoming()) && isValidId(memberId);
+      allow delete: if isAdmin();
+    }
+
+    // 6. Timeline Events Collection
+    match /timelineEvents/{eventId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTimelineEvent(incoming()) && isValidId(eventId);
+      allow update: if isAdmin() && isValidTimelineEvent(incoming()) && isValidId(eventId);
+      allow delete: if isAdmin();
+    }
+
+    // 7. Contact Messages Collection (Public submissions)
+    match /contactMessages/{messageId} {
+      allow read: if isAdmin();
+      allow create: if isValidContactMessage(incoming()) && isValidId(messageId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 8. Registered Members Collection
+    match /members/{memberId} {
+      allow read: if isAdmin();
+      allow create: if isValidMember(incoming()) && isValidId(memberId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 9. Manuscripts Submission Collection
+    match /manuscripts/{manuscriptId} {
+      allow read: if isAdmin() || (isSignedIn() && existing().email == request.auth.token.email);
+      allow create: if isValidManuscript(incoming()) && isValidId(manuscriptId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 10. Publishing Packages Collection
+    match /publishingPackages/{packageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPublishingPackage(incoming()) && isValidId(packageId);
+      allow update: if isAdmin() && isValidPublishingPackage(incoming()) && isValidId(packageId);
+      allow delete: if isAdmin();
+    }
+
+    // 11. Package Inquiries Collection
+    match /packageInquiries/{inquiryId} {
+      allow read: if isAdmin();
+      allow create: if isValidPackageInquiry(incoming()) && isValidId(inquiryId);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // 12. Testimonials Collection
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidTestimonial(incoming()) && isValidId(testimonialId);
+      allow update: if isAdmin() && isValidTestimonial(incoming()) && isValidId(testimonialId);
+      allow delete: if isAdmin();
+    }
+
+    // 13. Publishing Partners Collection
+    match /publishingPartners/{partnerId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPartner(incoming()) && isValidId(partnerId);
+      allow update: if isAdmin() && isValidPartner(incoming()) && isValidId(partnerId);
+      allow delete: if isAdmin();
+    }
+
+    // 14. Hero Slides Collection
+    match /heroSlides/{slideId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidHeroSlide(incoming()) && isValidId(slideId);
+      allow update: if isAdmin() && isValidHeroSlide(incoming()) && isValidId(slideId);
+      allow delete: if isAdmin();
+    }
+
+    // 15. Settings Collection
+    match /settings/{settingsId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidSettings(incoming()) && isValidId(settingsId);
+      allow update: if isAdmin() && isValidSettings(incoming()) && isValidId(settingsId);
+      allow delete: if isAdmin();
+    }
+
+    // 16. Gallery Collection
+    match /gallery/{itemId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidGalleryItem(incoming()) && isValidId(itemId);
+      allow update: if isAdmin() && isValidGalleryItem(incoming()) && isValidId(itemId);
+      allow delete: if isAdmin();
+    }
+  }
+}
